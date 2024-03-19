@@ -1,0 +1,82 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "privateEndpoints_test2kansope_name": {
+            "defaultValue": "test2kansope",
+            "type": "String"
+        },
+        "storageAccounts_test2ug_externalid": {
+            "defaultValue": "/subscriptions/c3bffe7f-e643-4393-ae69-ab6e9fd0668f/resourceGroups/rg-ls-aratrika/providers/Microsoft.Storage/storageAccounts/test2ug",
+            "type": "String"
+        },
+        "virtualNetworks_kanso_vnet_externalid": {
+            "defaultValue": "/subscriptions/c3bffe7f-e643-4393-ae69-ab6e9fd0668f/resourceGroups/rg-ls-aratrika/providers/Microsoft.Network/virtualNetworks/kanso-vnet",
+            "type": "String"
+        },
+        "privateDnsZones_privatelink_file_core_windows_net_externalid": {
+            "defaultValue": "/subscriptions/c3bffe7f-e643-4393-ae69-ab6e9fd0668f/resourceGroups/rg-ls-aratrika/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2023-09-01",
+            "name": "[parameters('privateEndpoints_test2kansope_name')]",
+            "location": "eastus",
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[parameters('privateEndpoints_test2kansope_name')]",
+                        "id": "[concat(resourceId('Microsoft.Network/privateEndpoints', parameters('privateEndpoints_test2kansope_name')), concat('/privateLinkServiceConnections/', parameters('privateEndpoints_test2kansope_name')))]",
+                        "properties": {
+                            "privateLinkServiceId": "[parameters('storageAccounts_test2ug_externalid')]",
+                            "groupIds": [
+                                "file"
+                            ],
+                            "privateLinkServiceConnectionState": {
+                                "status": "Approved",
+                                "description": "Auto-Approved",
+                                "actionsRequired": "None"
+                            }
+                        }
+                    }
+                ],
+                "manualPrivateLinkServiceConnections": [],
+                "customNetworkInterfaceName": "[concat(parameters('privateEndpoints_test2kansope_name'), '-nic')]",
+                "subnet": {
+                    "id": "[concat(parameters('virtualNetworks_kanso_vnet_externalid'), '/subnets/default')]"
+                },
+                "ipConfigurations": [{
+                    "name": "test2kanso-pe-pri-ip",
+                    "properties": {
+                        "memberName": "file",
+                        "groupId": "file",
+                        "privateIPAddress": "198.172.1.5"
+                    }
+                }],
+                "customDnsConfigs": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2023-09-01",
+            "name": "[concat(parameters('privateEndpoints_test2kansope_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', parameters('privateEndpoints_test2kansope_name'))]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "privatelink-file-core-windows-net",
+                        "properties": {
+                            "privateDnsZoneId": "[parameters('privateDnsZones_privatelink_file_core_windows_net_externalid')]"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
